@@ -1,194 +1,164 @@
 <?php
-define('HCAL_LINE_SPLITER' , '&loz;');
-define('HCAL_LINE_DELIMITER' , "\r\n");
 
+require 'hCalCore.php';
+require_once 'hCalEvent.php';
+
+/**
+ * hCal, a iCal parser for PHP
+ *
+ * PHP Version 5
+ *
+ * @category  HCal
+ * @package   HCal
+ * @author    bu <bu@hax4.in>
+ * @copyright 2010 hahahaha studio
+ * @license   http://www.opensource.org/licenses/bsd-license.php The BSD License
+ * @link      http://pear.php.net/package/hCal
+ */
+/**
+ * Symbol that hCal used as Line Delimetiter when parsing
+ */
+define('HCAL_LINE_SPLITER', '&loz;');
+
+/**
+ * File delimiter (\r\n for common)
+ */
+define('HCAL_LINE_DELIMITER', "\r\n");
+
+/**
+ * Short description for class
+ *
+ * Long description (if any) ...
+ *
+ * @category  CategoryName
+ * @package   HCal
+ * @author    bu <bu@hax4.in>
+ * @copyright 2010 hahahaha studio
+ * @license   http://www.opensource.org/licenses/bsd-license.php The BSD License
+ * @link      http://hcal.hax4.in/
+ */
 class hCal extends hCalCore
 {
+
+    /**
+     * Description for protected
+     * @var    string
+     * @access protected
+     */
     protected $_Content = '';
+    /**
+     * Description for protected
+     * @var    array
+     * @access protected
+     */
     protected $_Events = array();
-    
+
+    /**
+     * Short description for function
+     *
+     * Long description (if any) ...
+     *
+     * @param  unknown $file_location Parameter description (if any) ...
+     * @return object  Return description (if any) ...
+     * @access public
+     * @static
+     */
+    public static function createFrom($file_location)
+    {
+	return new hCal(file_get_contents($file_location));
+    }
+
+    /**
+     * Short description for function
+     *
+     * Long description (if any) ...
+     *
+     * @param  unknown $content Parameter description (if any) ...
+     * @return void
+     * @access public
+     */
     public function __construct($content)
     {
-        $content = str_replace(HCAL_LINE_DELIMITER, HCAL_LINE_SPLITER, $content);
-        
-        $this->_Content = $content;
-        
-        $this->parseEvents();
+	$content = str_replace(HCAL_LINE_DELIMITER, HCAL_LINE_SPLITER, $content);
+	$this->_Content = $content;
+	$this->parseEvents();
     }
-    
+
     //X-WR-TIMEZONE
-    
+
+    /**
+     * Short description for function
+     *
+     * Long description (if any) ...
+     *
+     * @return void
+     * @access protected
+     */
     protected function parseTimezone()
     {
-        $pattern = '/BEGIN:VTIMEZONE(.*?)END:VTIMEZONE/';
-        
-        preg_match_all($pattern, $this->_Content, $matches, PREG_PATTERN_ORDER);
-        
-        $zone =array();
-        
-        foreach($matches[1] as $match)
-        {
-            $zone_lines = explode(HCAL_LINE_SPLITER, $match);
-            
-            $zone_attr = array();
-            foreach($zone_lines as $line)
-            {
-                $result = $this->parseAttribute($line);
-                if(is_array($result))
-                {
-                    $zone_attr[$result['name']] = $result['value'];
-                }
-            }
-            
-            $zone[] = $zone_attr;
-        }
-        
-        print_r($zone);
+	$pattern = '/BEGIN:VTIMEZONE(.*?)END:VTIMEZONE/';
+	preg_match_all($pattern, $this->_Content, $matches, PREG_PATTERN_ORDER);
+	$zone = array();
+	foreach ($matches[1] as $match)
+	{
+	    $zone_lines = explode(HCAL_LINE_SPLITER, $match);
+	    $zone_attr = array();
+	    foreach ($zone_lines as $line)
+	    {
+		$result = $this->parseProperty($line);
+		if (is_array($result))
+		{
+		    $zone_attr[$result['name']] = $result['value'];
+		}
+	    }
+	    $zone[] = $zone_attr;
+	}
+	print_r($zone);
     }
-    
+
     /**
-    * Parse file
-    */
+     * Parse file
+     */
     protected function parseEvents()
     {
-        $pattern = '/BEGIN:VEVENT(.*?)END:VEVENT/';
-        
-        preg_match_all($pattern, $this->_Content, $matches, PREG_PATTERN_ORDER);
-        
-        foreach($matches[1] as $event)
-        {
-            $this->_Events[] = new hCalEvent($event);
-        }
+	$pattern = '/BEGIN:VEVENT(.*?)END:VEVENT/';
+	preg_match_all($pattern, $this->_Content, $matches, PREG_PATTERN_ORDER);
+	foreach ($matches[1] as $event)
+	{
+	    $this->_Events[] = new hCalEvent($event);
+	}
     }
-  
-  public function getEvents()
-  {
-    return $this->_Events;
-  }
-}
 
-class hCalCore
-{
-    protected function parseAttribute($attribute)
+    /**
+     * Short description for function
+     *
+     * Long description (if any) ...
+     *
+     * @param  array  $options Parameter description (if any) ...
+     * @return array  Return description (if any) ...
+     * @access public
+     */
+    public function getEvents($options)
     {
-        $temp = explode(':' , $attribute);
-        
-        if(sizeof($temp) == 2)
-        {
-            if(strpos($attribute, ';') === FALSE)
-            {
-                return array( 'name' => $temp[0] , 'value' => array('value' => $temp[1]));
-            }
-            else
-            {
-                $attribute_attr = explode(';', $temp[0]);
-                
-                $attr_array = array();
-                
-                foreach($attribute_attr as $attr)
-                {
-                    if(strpos($attr,'=') !== FALSE)
-                    {
-                        $attr_tmp = explode('=',$attr);
-                        
-                        $attr_array[$attr_tmp[0]] = $attr_tmp[1];
-                    }
-                }
-                
-                return array( 'name' => $attribute_attr[0] , 'value' => array_merge(array('value' => $temp[1]), $attr_array));
-            }
-        }
-    }
-}
-
-class hCalEvent extends hCalCore
-{
-    private $timeStart, $timeEnd, $retrieveTime, $UID, $description, $location, $summary;
-    
-    private $column = array()   ;
-    
-    private $_Content;
-    
-    public function __construct($event_text)
-    {
-        $this->_Content = $event_text;
-        
-        $this->parse();
-    }
-    
-    protected function parse()
-    {
-        $event_lines = explode(HCAL_LINE_SPLITER, $this->_Content);
-            
-        foreach($event_lines as $line)
-        {
-            $result = $this->parseAttribute($line);
-            
-            $this->column[$result['name']] = $result['value'];
-        }
-    }
-    
-
-    
-    public function printColumns()
-    {
-        var_dump($this->column);
-    }
-    
-    public function getTitle()
-    {
-        return $this->get('SUMMARY');
-    }
-    
-    public function parseTimeField($field_name)
-    {
-        if(isset($this->column[$field_name]['TZID']))
-        {
-             $date = new DateTime($this->column[$field_name]['value'], new DateTimeZone($this->column[$field_name]['TZID']));
-             
-             return $date->format('YmdHis');
-        }
-        else
-        {
-            if(isset($this->column[$field_name]['VALUE']) &&  $this->column[$field_name]['VALUE'] == 'DATE')
-            {
-                return $this->column[$field_name]['value'].'000000';
-            }
-            
-	    if(strpos($this->column[$field_name]['value'],'Z') !== FALSE)
+	$events = $this->_Events;
+	if (isset($options['order']) && is_string($options['order']) && $options['order'] == 'time')
+	{
+	    $event_by_time = array();
+	    foreach ($events as $event)
 	    {
-		return date('YmdHis',strtotime($this->column[$field_name]['value']));
+		$time = $event->getTime();
+		$event_by_time[$time[0]] = $event;
 	    }
+	    krsort($event_by_time);
+	    $events = $event_by_time;
+	    unset($event_by_time);
+	}
+	if (isset($options['count']) && is_int($options['count']) && $options['count'] > 0)
+	{
+	    $events = array_slice($events, 0, $options['count']);
+	}
+	return $events;
+    }
 
-    	return date('YmdHis',strtotime($this->column[$field_name]['value']));
-    
-        }
-    }
-    
-    public function getTime()
-    {
-        return array($this->parseTimeField('DTSTART'), $this->parseTimeField('DTEND'));
-    }
-    
-    public function getDescription()
-    {
-        return $this->get('DESCRIPTION');
-    }
-    
-    public function getUID()
-    {
-        return $this->UID;
-    }
-    
-    public function get($iCal_FieldName = '')
-    {
-        if(isset($this->column[$iCal_FieldName]['value']))
-	{
-	    return $this->column[$iCal_FieldName]['value'];
-	}
-	else
-	{
-	    return null;
-	}
-    }
 }
+

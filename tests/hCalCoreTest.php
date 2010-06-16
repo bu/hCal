@@ -1,7 +1,7 @@
 <?php
 
 require_once 'PHPUnit/Framework.php';
-require_once dirname(__FILE__) . '/../../hCalCore.php';
+require_once dirname(__FILE__) . '/../hCalCore.php';
 
 /**
  * Mock object that extends hCalCore, providing access to protected methods.

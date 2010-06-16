@@ -1,41 +1,35 @@
 <?php
 
 /**
- * Short description for class
+ * Event parsing
  *
- * Long description (if any) ...
- *
- * @category  CategoryName
- * @package   hCal
- * @author    Author's name <author@mail.com>
- * @copyright 2010 Author's name
+ * @category  HCal
+ * @package   HCal
+ * @author    bu <bu@hax4.in>
+ * @copyright 2010 hahahaha studio
  * @license   http://www.opensource.org/licenses/bsd-license.php The BSD License
- * @version   Release: @package_version@
- * @link      http://pear.php.net/package/hCal
- * @see       References to other sections (if any)...
+ * @link      http://hcal.hax4.in/
  */
 class hCalEvent extends hCalCore
 {
 
     /**
-     * Description for private
+     * Event Properties
      * @var    array
      * @access private
      */
-    private $column = array();
+    private $_Properties = array();
     /**
-     * Description for private
+     * Event iCal content
      * @var    unknown
      * @access private
      */
     private $_Content;
 
     /**
-     * Short description for function
+     * process after init
      *
-     * Long description (if any) ...
-     *
-     * @param  unknown $event_text Parameter description (if any) ...
+     * @param  string $event_text The iCal text to be parsed
      * @return void
      * @access public
      */
@@ -46,9 +40,7 @@ class hCalEvent extends hCalCore
     }
 
     /**
-     * Short description for function
-     *
-     * Long description (if any) ...
+     * Parse the properties and put them into $this->_Properities[]
      *
      * @return void
      * @access protected
@@ -56,32 +48,18 @@ class hCalEvent extends hCalCore
     protected function parse()
     {
 	$event_lines = explode(HCAL_LINE_SPLITER, $this->_Content);
+
 	foreach ($event_lines as $line)
 	{
 	    $result = $this->parseProperty($line);
-	    $this->column[$result['name']] = $result['value'];
+	    $this->_Properties[$result['name']] = $result['value'];
 	}
     }
 
     /**
-     * Short description for function
+     * Return title for the event
      *
-     * Long description (if any) ...
-     *
-     * @return void
-     * @access public
-     */
-    public function printColumns()
-    {
-	var_dump($this->column);
-    }
-
-    /**
-     * Short description for function
-     *
-     * Long description (if any) ...
-     *
-     * @return string Return description (if any) ...
+     * @return string Event title
      * @access public
      */
     public function getTitle()
@@ -90,41 +68,44 @@ class hCalEvent extends hCalCore
     }
 
     /**
-     * Short description for function
+     * parse time field (adjust with the timezone)
      *
-     * Long description (if any) ...
-     *
-     * @param  unknown $field_name Parameter description (if any) ...
-     * @return mixed   Return description (if any) ...
+     * @param  string $field_name the name of the requested time properity
+     * @return string the time string after timezone adjust
      * @access public
      */
     public function parseTimeField($field_name)
     {
-	if (isset($this->column[$field_name]['TZID']))
+	if (!isset($this->_Properties[$field_name]))
 	{
-	    $date = new DateTime($this->column[$field_name]['value'], new DateTimeZone($this->column[$field_name]['TZID']));
+	    return null;
+	}
+
+	if (isset($this->_Properties[$field_name]['TZID']))
+	{
+	    $date = new DateTime($this->_Properties[$field_name]['value'], new DateTimeZone($this->_Properties[$field_name]['TZID']));
 	    return $date->format('YmdHis');
 	}
 	else
 	{
-	    if (isset($this->column[$field_name]['VALUE']) && $this->column[$field_name]['VALUE'] == 'DATE')
+	    if (isset($this->_Properties[$field_name]['VALUE']) && $this->_Properties[$field_name]['VALUE'] == 'DATE')
 	    {
-		return $this->column[$field_name]['value'] . '000000';
+		return $this->_Properties[$field_name]['value'] . '000000';
 	    }
-	    if (strpos($this->column[$field_name]['value'], 'Z') !== false)
+	    if (strpos($this->_Properties[$field_name]['value'], 'Z') !== false)
 	    {
-		return date('YmdHis', strtotime($this->column[$field_name]['value']));
+		return date('YmdHis', strtotime($this->_Properties[$field_name]['value']));
 	    }
-	    return date('YmdHis', strtotime($this->column[$field_name]['value']));
+	    return date('YmdHis', strtotime($this->_Properties[$field_name]['value']));
 	}
     }
 
     /**
-     * Short description for function
+     * return event start, and end
      *
-     * Long description (if any) ...
+     * if start or end is not set(eg Repeative events), return null.
      *
-     * @return mixed  Return description (if any) ...
+     * @return array {DTSTART, DTEND}
      * @access public
      */
     public function getTime()
@@ -133,9 +114,7 @@ class hCalEvent extends hCalCore
     }
 
     /**
-     * Short description for function
-     *
-     * Long description (if any) ...
+     * return event description
      *
      * @return string Return description (if any) ...
      * @access public
@@ -146,11 +125,9 @@ class hCalEvent extends hCalCore
     }
 
     /**
-     * Short description for function
+     * return event uid
      *
-     * Long description (if any) ...
-     *
-     * @return string Return description (if any) ...
+     * @return string Event UID
      * @access public
      */
     public function getUID()
@@ -159,19 +136,17 @@ class hCalEvent extends hCalCore
     }
 
     /**
-     * Short description for function
+     * retreieve the specific properity
      *
-     * Long description (if any) ...
-     *
-     * @param  string $iCal_FieldName Parameter description (if any) ...
-     * @return mixed  Return description (if any) ...
+     * @param  string $Properity_Name Properity name
+     * @return mixed  the value of the requested properity
      * @access public
      */
-    public function get($iCal_FieldName = '')
+    public function get($Properity_Name = '')
     {
-	if (isset($this->column[$iCal_FieldName]['value']))
+	if (isset($this->_Properties[$Properity_Name]['value']))
 	{
-	    return $this->column[$iCal_FieldName]['value'];
+	    return $this->_Properties[$Properity_Name]['value'];
 	}
 	else
 	{

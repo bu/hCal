@@ -1,20 +1,7 @@
 <?php
-
-require 'hCalCore.php';
+require_once 'hCalCore.php';
 require_once 'hCalEvent.php';
 
-/**
- * hCal, a iCal parser for PHP
- *
- * PHP Version 5
- *
- * @category  HCal
- * @package   HCal
- * @author    bu <bu@hax4.in>
- * @copyright 2010 hahahaha studio
- * @license   http://www.opensource.org/licenses/bsd-license.php The BSD License
- * @link      http://pear.php.net/package/hCal
- */
 /**
  * Symbol that hCal used as Line Delimetiter when parsing
  */
@@ -26,11 +13,9 @@ define('HCAL_LINE_SPLITER', '&loz;');
 define('HCAL_LINE_DELIMITER', "\r\n");
 
 /**
- * Short description for class
+ * Process the entire iCal file and delegate the tasks of parsing
  *
- * Long description (if any) ...
- *
- * @category  CategoryName
+ * @category  HCal
  * @package   HCal
  * @author    bu <bu@hax4.in>
  * @copyright 2010 hahahaha studio
@@ -41,22 +26,20 @@ class hCal extends hCalCore
 {
 
     /**
-     * Description for protected
+     * iCal file content
      * @var    string
      * @access protected
      */
     protected $_Content = '';
     /**
-     * Description for protected
+     * iCal events
      * @var    array
      * @access protected
      */
     protected $_Events = array();
 
     /**
-     * Short description for function
-     *
-     * Long description (if any) ...
+     * providing users access to a ical file
      *
      * @param  unknown $file_location Parameter description (if any) ...
      * @return object  Return description (if any) ...
@@ -69,9 +52,7 @@ class hCal extends hCalCore
     }
 
     /**
-     * Short description for function
-     *
-     * Long description (if any) ...
+     * actions that takes after init
      *
      * @param  unknown $content Parameter description (if any) ...
      * @return void
@@ -87,9 +68,7 @@ class hCal extends hCalCore
     //X-WR-TIMEZONE
 
     /**
-     * Short description for function
-     *
-     * Long description (if any) ...
+     * parse timezone information
      *
      * @return void
      * @access protected
@@ -117,7 +96,10 @@ class hCal extends hCalCore
     }
 
     /**
-     * Parse file
+     * Parse events and put them into $this->_Events[]
+     *
+     * @return void
+     * @access protected
      */
     protected function parseEvents()
     {
@@ -130,33 +112,47 @@ class hCal extends hCalCore
     }
 
     /**
-     * Short description for function
+     * Provide access for users to retrieve events
      *
-     * Long description (if any) ...
-     *
-     * @param  array  $options Parameter description (if any) ...
-     * @return array  Return description (if any) ...
+     * @param  array  $options reterieve options that could be optionally assigned
+     * @return array  the events according to the requested options.
      * @access public
      */
-    public function getEvents($options)
+    public function getEvents($options = null)
     {
 	$events = $this->_Events;
+
+	/**
+	 *  If there is no options
+	 */
+	if($options == null)
+	{
+	    $options = array();
+	}
+
 	if (isset($options['order']) && is_string($options['order']) && $options['order'] == 'time')
 	{
 	    $event_by_time = array();
+
 	    foreach ($events as $event)
 	    {
 		$time = $event->getTime();
 		$event_by_time[$time[0]] = $event;
 	    }
+
 	    krsort($event_by_time);
+
 	    $events = $event_by_time;
+
 	    unset($event_by_time);
 	}
-	if (isset($options['count']) && is_int($options['count']) && $options['count'] > 0)
+	 
+	if (isset($options['count']) && $options['count'] > 0)
 	{
 	    $events = array_slice($events, 0, $options['count']);
+	    
 	}
+
 	return $events;
     }
 

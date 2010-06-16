@@ -20,38 +20,57 @@ class hCalCore
      * @return array    A array that contains property, params, and param-values
      * @access protected
      */
-    protected function parseProperty($attribute)
+    protected function parseProperty($properpty_string)
     {
-	$temp = explode(':', $attribute);
-	if (sizeof($temp) == 2)
+	/**
+	 * Property Parameters should defined as:
+	 *
+	 * PROPERPTY;param=param_value:properpty_value
+	 */
+	if ($properpty_string !== '')
 	{
-	    if (strpos($attribute, ';') === false)
+	    $property_parts = explode(':', $properpty_string);
+
+	    if (sizeof($property_parts) == 2)
 	    {
-		return array(
-		    'name' => $temp[0],
-		    'value' => array('value' => $temp[1])
-		);
-	    }
-	    else
-	    {
+		$property_value = $property_parts[1];
 
-		$params = explode(';', $temp[0]);
-
-		$attr_array = array();
-
-		foreach ($params as $attr)
+		/**
+		 * Check if properpty exists any param
+		 */
+		if (strpos($properpty_string, ';') === false)
 		{
-		    if (strpos($attr, '=') !== false)
-		    {
-			$attr_tmp = explode('=', $attr);
-			$attr_array[$attr_tmp[0]] = $attr_tmp[1];
-		    }
+		    return array(
+			'name' => $property_parts[0],
+			'value' => array('value' => $property_value)
+		    );
 		}
+		else
+		{
+		    /**
+		     * If params exist, split them first
+		     */
+		    $params = explode(';', $property_parts[0]);
 
-		return array(
-		    'name' => $params[0],
-		    'value' => array_merge(array('value' => $temp[1]), $attr_array)
-		);
+		    $param_values = array();
+
+		    foreach ($params as $param)
+		    {
+			/**
+			 * Check if param get a value
+			 */
+			if (strpos($param, '=') !== false)
+			{
+			    $param_parts = explode('=', $param);
+			    $param_values[$param_parts[0]] = $param_parts[1];
+			}
+		    }
+
+		    return array(
+			'name' => $params[0],
+			'value' => array_merge(array('value' => $property_value), $param_values)
+		    );
+		}
 	    }
 	}
     }

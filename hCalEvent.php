@@ -113,6 +113,16 @@ class hCalEvent extends hCalCore
 	return array($this->parseTimeField('DTSTART'), $this->parseTimeField('DTEND'));
     }
 
+    public function getStartTime()
+    {
+	return $this->parseTimeField('DTSTART');
+    }
+
+    public function getEndTime()
+    {
+	$this->parseTimeField('DTEND');
+    }
+
     /**
      * return event description
      *
@@ -121,7 +131,7 @@ class hCalEvent extends hCalCore
      */
     public function getDescription()
     {
-	return $this->get('DESCRIPTION');
+	return str_replace('\n',"\n",$this->get('DESCRIPTION'));
     }
 
     /**
@@ -133,6 +143,17 @@ class hCalEvent extends hCalCore
     public function getUID()
     {
 	return $this->get('UID');
+    }
+
+    /**
+     * return event location
+     *
+     * @return string Event UID
+     * @access public
+     */
+    public function getLocation()
+    {
+	return $this->get('LOCATION');
     }
 
     /**

@@ -65,7 +65,7 @@ class hCal extends hCalCore
 	$this->parseEvents();
     }
 
-    //X-WR-TIMEZONE
+//X-WR-TIMEZONE
 
     /**
      * parse timezone information
@@ -107,7 +107,8 @@ class hCal extends hCalCore
 	preg_match_all($pattern, $this->_Content, $matches, PREG_PATTERN_ORDER);
 	foreach ($matches[1] as $event)
 	{
-	    $this->_Events[] = new hCalEvent($event);
+	    $event = new hCalEvent($event);
+	    $this->_Events[$event->getUID()] = $event;
 	}
     }
 
@@ -125,7 +126,7 @@ class hCal extends hCalCore
 	/**
 	 *  If there is no options
 	 */
-	if($options == null)
+	if ($options == null)
 	{
 	    $options = array();
 	}
@@ -146,14 +147,32 @@ class hCal extends hCalCore
 
 	    unset($event_by_time);
 	}
-	 
+
 	if (isset($options['count']) && $options['count'] > 0)
 	{
 	    $events = array_slice($events, 0, $options['count']);
-	    
 	}
 
 	return $events;
+    }
+
+    /**
+     * Provide access for users to retrieve event by UID
+     *
+     * @param  string $UID reterieve event's UID
+     * @return array the event according to the requested options.
+     * @access public
+     */
+    public function getEventByUID($UID)
+    {
+	try
+	{
+	    return $this->_Events[$UID];
+	}
+	catch (Exception $e)
+	{
+	    return null;
+	}
     }
 
 }
